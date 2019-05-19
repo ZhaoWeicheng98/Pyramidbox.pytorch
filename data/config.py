@@ -61,7 +61,7 @@ _C.CONF_THRESH = 0.05
 
 
 # dataset config
-_C.HOME = '/home/data/lj/'
+_C.HOME = 'D:\\mtcnn-pytorch\\data_set\\face_detection'
 
 # face config
 _C.FACE = EasyDict()

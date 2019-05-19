@@ -149,16 +149,18 @@ def train():
         losses = 0
         for batch_idx, (images, face_targets, head_targets) in enumerate(train_loader):
             if args.cuda:
-                images = Variable(images.cuda())
-                face_targets = [Variable(ann.cuda(), volatile=True)
+                with torch.no_grad():
+                    images = Variable(images.cuda())
+                    face_targets = [Variable(ann.cuda())
                                 for ann in face_targets]
-                head_targets = [Variable(ann.cuda(), volatile=True)
+                    head_targets = [Variable(ann.cuda())
                                 for ann in head_targets]
             else:
-                images = Variable(images)
-                face_targets = [Variable(ann, volatile=True)
+                with torch.no_grad():
+                    images = Variable(images)
+                    face_targets = [Variable(ann)
                                 for ann in face_targets]
-                head_targets = [Variable(ann, volatile=True)
+                    head_targets = [Variable(ann)
                                 for ann in head_targets]
 
             if iteration in cfg.LR_STEPS:
@@ -172,12 +174,12 @@ def train():
             face_loss_l, face_loss_c = criterion1(out, face_targets)
             head_loss_l, head_loss_c = criterion2(out, head_targets)
             loss = face_loss_l + face_loss_c + head_loss_l + head_loss_c
-            losses += loss.data[0]
+            losses += loss.item()
             loss.backward()
             optimizer.step()
             t1 = time.time()
-            face_loss = (face_loss_l + face_loss_c).data[0]
-            head_loss = (head_loss_l + head_loss_c).data[0]
+            face_loss = (face_loss_l + face_loss_c).item()
+            head_loss = (head_loss_l + head_loss_c).item()
 
             if iteration % 10 == 0:
                 loss_ = losses / (batch_idx + 1)
@@ -211,23 +213,25 @@ def val(epoch,
     for batch_idx, (images, face_targets, head_targets) in enumerate(val_loader):
         if args.cuda:
             images = Variable(images.cuda())
-            face_targets = [Variable(ann.cuda(), volatile=True)
+            with torch.no_grad():
+                face_targets = [Variable(ann.cuda())
                             for ann in face_targets]
-            head_targets = [Variable(ann.cuda(), volatile=True)
+                head_targets = [Variable(ann.cuda())
                             for ann in head_targets]
         else:
             images = Variable(images)
-            face_targets = [Variable(ann, volatile=True)
+            with torch.no_grad():
+                face_targets = [Variable(ann)
                             for ann in face_targets]
-            head_targets = [Variable(ann, volatile=True)
+                head_targets = [Variable(ann)
                             for ann in head_targets]
 
         out = net(images)
         face_loss_l, face_loss_c = criterion1(out, face_targets)
         head_loss_l, head_loss_c = criterion2(out, head_targets)
 
-        face_losses += (face_loss_l + face_loss_c).data[0]
-        head_losses += (head_loss_l + head_loss_c).data[0]
+        face_losses += (face_loss_l + face_loss_c).item()
+        head_losses += (head_loss_l + head_loss_c).item()
         step += 1
 
     tloss = face_losses / step

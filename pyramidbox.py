@@ -108,7 +108,7 @@ class PyramidBox(nn.Module):
 
     def _upsample_prod(self, x, y):
         _, _, H, W = y.size()
-        return F.upsample(x, size=(H, W), mode='bilinear') * y
+        return F.interpolate(x, size=(H, W), mode='bilinear',align_corners=True) * y
 
     def forward(self, x):
         size = x.size()[2:]
@@ -241,7 +241,8 @@ class PyramidBox(nn.Module):
             head_mbox_conf = torch.cat(head_confs, dim=1)
 
         priors_boxes = PriorBox(size, feature_maps, cfg)
-        priors = Variable(priors_boxes.forward(), volatile=True)
+        with torch.no_grad():
+            priors = Variable(priors_boxes.forward())
 
         if not self.is_infer:
             output = (face_mbox_loc, face_mbox_conf,
@@ -268,7 +269,7 @@ class PyramidBox(nn.Module):
         return epoch
 
     def xavier(self, param):
-        init.xavier_uniform(param)
+        init.xavier_uniform_(param)
 
     def weights_init(self, m):
         if isinstance(m, nn.Conv2d):
